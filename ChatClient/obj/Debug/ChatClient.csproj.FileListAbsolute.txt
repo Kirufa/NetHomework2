@@ -1,0 +1,4 @@
+C:\Users\wang\Desktop\GIT2\NetHomework2\ChatClient\obj\Debug\ChatClient.csprojResolveAssemblyReference.cache
+C:\Users\wang\Desktop\GIT2\NetHomework2\ChatClient\obj\Debug\ChatClient.Form_Client.resources
+C:\Users\wang\Desktop\GIT2\NetHomework2\ChatClient\obj\Debug\ChatClient.Properties.Resources.resources
+C:\Users\wang\Desktop\GIT2\NetHomework2\ChatClient\obj\Debug\ChatClient.csproj.GenerateResource.Cache
