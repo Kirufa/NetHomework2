@@ -54,6 +54,7 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SocketHandle.cs" />
     <EmbeddedResource Include="Form_Client.resx">
       <DependentUpon>Form_Client.cs</DependentUpon>
     </EmbeddedResource>

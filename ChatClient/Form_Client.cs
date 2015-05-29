@@ -28,7 +28,7 @@ namespace ChatClient
         {
             OpenFileDialog ofd = new OpenFileDialog();
             ofd.FileName = null;
-
+            
             if (ofd.ShowDialog() == DialogResult.OK && ofd.FileName != null)
             {
                 Bitmap temp = new Bitmap(ofd.FileName);
