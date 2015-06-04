@@ -10,6 +10,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.IO;
 using System.Drawing.Imaging;
+using System.Xml.Serialization;
 using Handle;
 
 namespace ChatClient
@@ -91,10 +92,22 @@ namespace ChatClient
         private void button2_Click_1(object sender, EventArgs e)
         {
             string str = "Hello World!\n";
-            Server.Send(Encoding.ASCII.GetBytes(str));
-            byte[] arr = new byte[2048];
+            SocketHandle.Dgram dgram = new SocketHandle.Dgram();
+            
+            
+            byte [] _Arr = Encoding.Unicode.GetBytes(str);
+            Array.Copy(_Arr, dgram.Data, _Arr.Length);
+            dgram.Type = 1;
+            dgram.DataLength = _Arr.Length;
+
+            MemoryStream ms = new MemoryStream();
+            XmlSerializer xs = new XmlSerializer(typeof(SocketHandle.Dgram));
+            xs.Serialize(ms, dgram);
+
+            Server.Send(ms.ToArray());
+           /* byte[] arr = new byte[2048];
             int n = Server.Receive(arr);
-            this.textBox1.Text = Encoding.ASCII.GetString(arr, 0, n);
+            this.textBox1.Text = Encoding.ASCII.GetString(arr, 0, n);*/
         }
     }
 }
