@@ -33,9 +33,7 @@ namespace Handle
             //5: UDP Image, client -> server
             //6: UDP Image, server -> client
             //7: TCP send Name client -> server
-
-
-
+            //20: TCP System message server -> client
         }
 
         public const int MAX_DATASIZE = 2048;
@@ -169,9 +167,7 @@ namespace Handle
                 private Thread Recieve_Thread;
 
                 private bool ReceiveRunning = true;
-
-                private string Name;
-
+                                
                 //*****************************
                 //**********initial**********
                 //*****************************
@@ -187,6 +183,7 @@ namespace Handle
                     TCPEndPoint = new IPEndPoint(IPAddress.Parse(ServerIP), SocketData.Port);
                     EndPoint _EndPoint = (EndPoint)TCPEndPoint;
                     TCPServer.Connect(_EndPoint);
+                    ThreadInitial();
 
                 }
                 //******************************
@@ -207,6 +204,13 @@ namespace Handle
                         this.ReceiveRunning = false;
                     }
 
+                }
+
+                private void ThreadInitial()
+                {
+                    Recieve_Thread = new Thread(new ThreadStart(Receive_Thread_Run));
+                    Recieve_Thread.IsBackground = true;
+                    Recieve_Thread.Start();
                 }
 
                 private void Receive_Thread_Run()
@@ -233,19 +237,18 @@ namespace Handle
                         {
                             case 0:
                                 break;
-                            case 1:
+                            case 2:
                                 string _Str = ByteToStr(_Temp.Data, _Temp.DataLength);
-                                Form_Client.AddText("Recieve", _Str);
-
-
+                                string _Name = ByteToStr(_Temp.Name,_Temp.NameLength);
+                                Form_Client.AddText(_Name, _Str);
                                 break;
-                            case 3:
+                            case 4:
                                 break;
-                            case 5:
+                            case 6:
                                 break;
-                            case 7:
-                                string _Str2 = ByteToStr(_Temp.Name, _Temp.NameLength);
-                                this.Name = _Str2;
+                            case 20:
+                                string _Name2 = ByteToStr(_Temp.Name, _Temp.NameLength);
+                                Form_Client.AddText(_Name2, " 加入聊天室");
                                 break;
                             default:
                                 break;

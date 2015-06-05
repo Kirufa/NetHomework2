@@ -25,9 +25,10 @@ namespace ChatClient
         }
 
         public static ExRichTextBox ERT;
+        private byte[] Name_Arr;
 
         private void button_TCP_Connect_Click(object sender, EventArgs e)
-        {            
+        {
             try
             {
                 /*
@@ -38,7 +39,7 @@ namespace ChatClient
 
                 SocketHandle.InitialServer(textBox_ServerIP.Text);
                 SocketHandle.SendToServer(Encoding.Unicode.GetBytes(this.textBox_Name.Text), new byte[1], 7);
-              
+
             }
             catch
             { return; }
@@ -53,14 +54,17 @@ namespace ChatClient
 
             button_SendPic.Enabled = true;
             button_SendText.Enabled = true;
+            textBox_Text.Enabled = true;
+
+            Name_Arr = Encoding.Unicode.GetBytes(textBox_Name.Text);
 
         }
-        
+
         private Bitmap getPic()
         {
             OpenFileDialog ofd = new OpenFileDialog();
             ofd.FileName = null;
-            
+
             if (ofd.ShowDialog() == DialogResult.OK && ofd.FileName != null)
             {
                 Bitmap temp = new Bitmap(ofd.FileName);
@@ -79,35 +83,35 @@ namespace ChatClient
         }
         private void button2_Click(object sender, EventArgs e)
         {
-           /* IPEndPoint ipep = new IPEndPoint(IPAddress.Parse(textBox2.Text), 5555);
-            Socket cli = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            /* IPEndPoint ipep = new IPEndPoint(IPAddress.Parse(textBox2.Text), 5555);
+             Socket cli = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
 
-            Bitmap bmp = getPic();
-            this.pictureBox1.Image = bmp;
-            Byte[] Data = b2b(bmp);
+             Bitmap bmp = getPic();
+             this.pictureBox1.Image = bmp;
+             Byte[] Data = b2b(bmp);
 
-            EndPoint endpoint = (EndPoint)ipep;
-            cli.SendTo(Encoding.ASCII.GetBytes(Data.Length.ToString()), endpoint);
-            cli.SendTo(Data, endpoint);
-            cli.Close();*/
+             EndPoint endpoint = (EndPoint)ipep;
+             cli.SendTo(Encoding.ASCII.GetBytes(Data.Length.ToString()), endpoint);
+             cli.SendTo(Data, endpoint);
+             cli.Close();*/
         }
 
         private void button1_Click(object sender, EventArgs e)
         {
-          /*  EndPoint end = (EndPoint)IP;
-            Socket UDP = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-            Bitmap bmp = new Bitmap(@"C:\Users\wang\Desktop\Untitled.png");
-            MemoryStream ms = new MemoryStream();
-            bmp.Save(ms, ImageFormat.Png);
+            /*  EndPoint end = (EndPoint)IP;
+              Socket UDP = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+              Bitmap bmp = new Bitmap(@"C:\Users\wang\Desktop\Untitled.png");
+              MemoryStream ms = new MemoryStream();
+              bmp.Save(ms, ImageFormat.Png);
 
-            UDP.SendTo(ms.ToArray(), end);
-            byte[] arr = new byte[2048];
-            int n = UDP.ReceiveFrom(arr, ref end);
-            ms = new MemoryStream(arr, 0, n);
-            pictureBox1.Image = new Bitmap(ms);*/
+              UDP.SendTo(ms.ToArray(), end);
+              byte[] arr = new byte[2048];
+              int n = UDP.ReceiveFrom(arr, ref end);
+              ms = new MemoryStream(arr, 0, n);
+              pictureBox1.Image = new Bitmap(ms);*/
         }
 
-        private void button2_Click_1(object sender, EventArgs e)
+        private void button_SendText_Click(object sender, EventArgs e)
         {/*
             string str = "Hello World!\n";
             SocketHandle.Dgram dgram = new SocketHandle.Dgram();
@@ -123,14 +127,16 @@ namespace ChatClient
             xs.Serialize(ms, dgram);
 
             Server.Send(ms.ToArray());*/
-           /* byte[] arr = new byte[2048];
-            int n = Server.Receive(arr);
-            this.textBox1.Text = Encoding.ASCII.GetString(arr, 0, n);*/
-        }
+            /* byte[] arr = new byte[2048];
+             int n = Server.Receive(arr);
+             this.textBox1.Text = Encoding.ASCII.GetString(arr, 0, n);*/
+            if (textBox_Text.Text.Length > 0)
+            {
+                SocketHandle.SendToServer(Name_Arr, Encoding.Unicode.GetBytes(textBox_Text.Text), 1);
+                textBox_Text.Text = "";
+            }
+            textBox_Text.Focus();
 
-        private void ExRichTextBoxInitial()
-        {
-            
         }
 
         private void Form_Client_Load(object sender, EventArgs e)
@@ -145,12 +151,14 @@ namespace ChatClient
 
             foreach (Control i in this.Controls)
             {
-                if(i is Button || i is TextBox)
-                i.Enabled = false;
+                if (i is Button || i is TextBox)
+                    i.Enabled = false;
             }
 
             this.textBox_Name.Enabled = true;
             this.textBox_ServerIP.Enabled = true;
+
+            button1.Enabled = true;
 
         }
 
@@ -170,26 +178,42 @@ namespace ChatClient
                 this.button_TCP_Connect.Enabled = false;
         }
 
-        public static void AddText(string _Query, string Text)
+        public static void AddText(string _Name, string Text)
         {
             if (ERT.InvokeRequired)
             {
                 ERT.Invoke((MethodInvoker)delegate
                 {
-                    string _Str = _Query + " : " + Text + '\n';
+                    string _Str = _Name + " : " + Text + '\n';
                     ERT.AppendText(_Str);
                 });
 
             }
             else
             {
-                string _Str = _Query + " : " + Text + '\n';
+                string _Str = _Name + " : " + Text + '\n';
                 ERT.AppendText(_Str);
             }
         }
-    
-    }
 
+        private void button1_Click_1(object sender, EventArgs e)
+        {
+            Bitmap bmp = new Bitmap(@"C:\Users\wang\Pictures\pso2.jpg");
+            ERT.InsertImage(bmp);
+            ERT.Click += Click;
+
+        }
+        private void Click(object sender, EventArgs e)
+        {
+            if (ERT.SelectionType == RichTextBoxSelectionTypes.Object
+                   && ERT.SelectedRtf.IndexOf(@"\pict\wmetafile") != -1)
+            {
+                MessageBox.Show("image clicked!");
+                
+            }
+
+        }
+    }
 
 
 
