@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms;
 
-namespace Khendys.Controls 
+namespace Khenys.Controls 
 {
 
 	#region Public Enums

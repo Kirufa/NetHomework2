@@ -10,8 +10,9 @@ using System.IO;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
 using System.Threading;
-using System.Runtime.Serialization;
-using System.Runtime.Serialization.Formatters.Binary;
+using System.Xml.Serialization;
+using ChatClient;
+
 namespace Handle
 {
     public class SocketHandle
@@ -22,26 +23,26 @@ namespace Handle
             public byte[] Data = new byte[MAX_DATASIZE];
             public byte[] Name = new byte[STRING_SIZE];
             public int DataLength;
-            public int StringLength;
+            public int NameLength;
             public int Type;
             //0: check alive, client <-> server
             //1: TCP Text Data, client -> server 
             //2: TCP Text Data, server -> client 
-            //3: TCP Image Size, follow the UDP Image, client -> server 
-            //4: TCP Image Size, follow the UDP Image, server -> client
+            //3: TCP UDP Image Size, follow the UDP Image, client -> server 
+            //4: TCP UDP Image Size, follow the UDP Image, server -> client
             //5: UDP Image, client -> server
             //6: UDP Image, server -> client
+            //7: TCP send Name client -> server
+
 
 
         }
 
         public const int MAX_DATASIZE = 2048;
         public const int STRING_SIZE = 512;
-        public const int DGRAM_SIZE = sizeof(byte) * MAX_DATASIZE
-                                    + sizeof(byte) * STRING_SIZE
-                                    + sizeof(int)
-                                    + sizeof(int)
-                                    + sizeof(int);
+       
+        public const int RECEIVE_LENGTH = 10240;
+
 
 
         public static void SendPicture(Socket des, Bitmap bmp)
@@ -52,20 +53,28 @@ namespace Handle
         private static byte[] DgramToByte(Dgram dgram)
         {
             MemoryStream _Ms = new MemoryStream();
-            BinaryFormatter _Bf = new BinaryFormatter();
-            _Bf.Serialize(_Ms, dgram);
-            MessageBox.Show(_Ms.ToArray().Length.ToString());
+            XmlSerializer _Xs = new XmlSerializer(typeof(Dgram));
+            _Xs.Serialize(_Ms, dgram);
             return _Ms.ToArray();
         }
 
-        private static Dgram ByteToDgram(byte[] _Arr)
-        {
-            MemoryStream _Ms = new MemoryStream(_Arr);
-            BinaryFormatter _Bf = new BinaryFormatter();
+      private static Dgram ByteToDgram(byte[] _Arr)
+      {
+          MemoryStream _Ms = new MemoryStream(_Arr);
+          XmlSerializer _Xs = new XmlSerializer(typeof(Dgram));
+          //  MessageBox.Show(_Ms.ToArray().Length.ToString());
 
-            return (Dgram)_Bf.Deserialize(_Ms);
-        }
+          /*  using (FileStream fs = new FileStream("123.xml", FileMode.Create))
+            {
+                fs.Write(_Ms.ToArray(), 0, (int)_Ms.Length);
+                fs.Close();
+            }
+            */
 
+
+          Dgram _Ret = (Dgram)_Xs.Deserialize(_Ms);
+          return _Ret;
+      }
         private static List<byte[]> DivideBitmap(Bitmap bmp)
         {
             MemoryStream ms = new MemoryStream();
@@ -107,6 +116,21 @@ namespace Handle
             SocketData.Server.InitialUDPServer();
         }
 
+        public static void SendToServer(byte[] _Name,byte[] _Data,int _Type)
+        {
+            Dgram _Dg = new Dgram();
+
+            Array.Copy(_Data, _Dg.Data, _Data.Length);
+            Array.Copy(_Name, _Dg.Name, _Name.Length);
+            _Dg.Type = _Type;
+            _Dg.NameLength = _Name.Length;
+            _Dg.DataLength = _Data.Length;
+
+            SocketData.Server.TCPSend(_Dg);
+
+        }
+
+        
         private static byte[] StrToByte(string _Str)
         {
             return Encoding.Unicode.GetBytes(_Str);
@@ -117,20 +141,16 @@ namespace Handle
             return Encoding.Unicode.GetString(_Arr, 0, Len);
         }
 
-
-
+        
         public class SocketData
         {
             //TCP
             public static ServerData Server;
-            public static List<ClientData> TCP_UDP_Client = new List<ClientData>();
-
+           
             //other
             public const int Port = 61361;
-            public const int MAX_LISTEN_SIZE = 10;
             public const int THREAD_WAIT_TIME = 50;   // msec
-
-
+           
 
             public class ServerData
             {
@@ -142,23 +162,23 @@ namespace Handle
                 private IPEndPoint TCPEndPoint;
                 private IPEndPoint UDPEndPoint;
 
-                //background Thread
-                private Thread Accept_Thread;
-
+                
                 //other
-                private int ListenCount = MAX_LISTEN_SIZE;
                 public static string ServerIP = "192.168.0.103";
-                private bool AcceptRunning = true;
 
+                private Thread Recieve_Thread;
+
+                private bool ReceiveRunning = true;
+
+                private string Name;
 
                 //*****************************
-                //**********initional**********
+                //**********initial**********
                 //*****************************
                 public void InitialUDPServer()
                 {
                     UDPServer = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
                     UDPEndPoint = new IPEndPoint(IPAddress.Parse(ServerIP), Port);
-                    UDPServer.Bind(UDPEndPoint);
                 }
 
                 public void InitialTCPServer()
@@ -166,72 +186,26 @@ namespace Handle
                     TCPServer = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
                     TCPEndPoint = new IPEndPoint(IPAddress.Parse(ServerIP), SocketData.Port);
                     EndPoint _EndPoint = (EndPoint)TCPEndPoint;
-                    TCPServer.Bind(_EndPoint);
-                    TCPServer.Listen(MAX_LISTEN_SIZE);
-                    TCPAcceptInitial();
-                }
-                private void TCPAcceptInitial()
-                {
-                    Accept_Thread = new Thread(this.Accept_Thread_Run);
-                    Accept_Thread.IsBackground = true;
-                    Accept_Thread.Start();
+                    TCPServer.Connect(_EndPoint);
 
                 }
                 //******************************
-                //**********\initional**********
+                //**********\initial**********
                 //******************************
 
-                //*************************************
-                //**********background thread**********
-                //*************************************
-                private void Accept_Thread_Run()
+                public void TCPSend(Dgram _Dgram)
                 {
-                    while (AcceptRunning)
+                    byte[] _Arr = SocketHandle.DgramToByte(_Dgram);
+
+                    try
                     {
-                        if (ListenCount > 0)
-                        {
-                            Socket _Socket = TCPServer.Accept();
-                            MessageBox.Show("Accept");
-                            ClientData _Client = new ClientData(_Socket);
-                            TCP_UDP_Client.Add(_Client);
-                            ListenCount--;
-                        }
-                        Thread.Sleep(THREAD_WAIT_TIME);
+                        TCPServer.Send(_Arr);
                     }
-                }
-                //*************************************
-                //**********background thread**********
-                //*************************************
-
-
-            }
-
-            public class ClientData
-            {
-                private Socket TCP_Client;
-                private Socket UDP_Client;
-                private IPEndPoint EP;
-                public int ID;
-                public static int IDCount = 0;
-
-                private Thread Receive_Thread;
-
-                private bool ReceiveRunning = true;
-
-                public ClientData(Socket socket)
-                {
-                    TCP_Client = socket;
-                    ID = IDCount++;
-                    Receive_Thread = new Thread(this.Receive_Thread_Run);
-
-                    Receive_Thread.Start();
-                }
-
-                ~ClientData()
-                {
-                    TCP_Client.Close();
-                    this.ReceiveRunning = false;
-
+                    catch (Exception ex)
+                    {
+                        Form_Client.AddText("Except", ex.ToString());
+                        this.ReceiveRunning = false;
+                    }
 
                 }
 
@@ -241,16 +215,16 @@ namespace Handle
                     {
                         //send to all online member
                         Dgram _Temp = new Dgram();
-                        byte[] _Arr = new byte[DGRAM_SIZE];
+                        byte[] _Arr = new byte[RECEIVE_LENGTH];
                         int RecvSize;
                         try
                         {
-                            RecvSize = TCP_Client.Receive(_Arr);
+                            RecvSize = TCPServer.Receive(_Arr);
                         }
                         catch (Exception ex)
                         {
-                            MessageBox.Show(ex.ToString());
-
+                            Form_Client.AddText("Except", ex.ToString());
+                            break;
                         }
 
                         _Temp = SocketHandle.ByteToDgram(_Arr);
@@ -260,8 +234,8 @@ namespace Handle
                             case 0:
                                 break;
                             case 1:
-                                string _Str = ByteToStr(_Temp.Name, _Temp.StringLength);
-                                MessageBox.Show(_Str);
+                                string _Str = ByteToStr(_Temp.Data, _Temp.DataLength);
+                                Form_Client.AddText("Recieve", _Str);
 
 
                                 break;
@@ -269,13 +243,15 @@ namespace Handle
                                 break;
                             case 5:
                                 break;
+                            case 7:
+                                string _Str2 = ByteToStr(_Temp.Name, _Temp.NameLength);
+                                this.Name = _Str2;
+                                break;
                             default:
                                 break;
                         }
                     }
                 }
-
-
 
             }
 
