@@ -43,9 +43,24 @@ namespace Handle
 
 
 
-        public static void SendPicture(Socket des, Bitmap bmp)
+        public static void SendPicture(Bitmap bmp)
         {
             List<byte[]> _Data = DivideBitmap(bmp);
+            int Size = _Data.Count;
+            SendToServer(new byte[1], StrToByte(Size.ToString()), 3);
+
+            List<Dgram> _Temp = new List<Dgram>();
+            
+            foreach(byte[] ite in _Data)
+            {
+                Dgram _D = new Dgram();
+                Array.Copy(ite, _D.Data, ite.Length);
+                _D.DataLength = ite.Length;
+                _Temp.Add(_D);
+            }
+
+            SocketData.Server.UDPSend(_Temp);
+            
         }
 
         private static byte[] DgramToByte(Dgram dgram)
@@ -56,9 +71,9 @@ namespace Handle
             return _Ms.ToArray();
         }
 
-      private static Dgram ByteToDgram(byte[] _Arr)
-      {
-          MemoryStream _Ms = new MemoryStream(_Arr);
+        private static Dgram ByteToDgram(byte[] _Arr, int _Len)
+        {
+            MemoryStream _Ms = new MemoryStream(_Arr, 0, _Len);
           XmlSerializer _Xs = new XmlSerializer(typeof(Dgram));
           //  MessageBox.Show(_Ms.ToArray().Length.ToString());
 
@@ -111,10 +126,27 @@ namespace Handle
             SocketData.Server = new SocketData.ServerData();
             SocketData.ServerData.ServerIP = _IP;
             SocketData.Server.InitialTCPServer();
-            SocketData.Server.InitialUDPServer();
+           // SocketData.Server.InitialUDPServer();
         }
 
-        public static void SendToServer(byte[] _Name,byte[] _Data,int _Type)
+        public static void SendText(string _Name,string _Str,int _Type)
+        {
+            byte[] _Name_Arr = StrToByte(_Name);
+            byte[] _Str_Arr = StrToByte(_Str);
+            SendToServer(_Name_Arr, _Str_Arr, _Type);
+
+        }
+        private static byte[] StrToByte(string _Str)
+        {
+            return Encoding.Unicode.GetBytes(_Str);
+        }
+
+        private static string ByteToStr(byte[] _Arr, int Len)
+        {
+            return Encoding.Unicode.GetString(_Arr, 0, Len);
+        }
+
+        private static void SendToServer(byte[] _Name,byte[] _Data,int _Type)
         {
             Dgram _Dg = new Dgram();
 
@@ -128,18 +160,8 @@ namespace Handle
 
         }
 
-        
-        private static byte[] StrToByte(string _Str)
-        {
-            return Encoding.Unicode.GetBytes(_Str);
-        }
-
-        private static string ByteToStr(byte[] _Arr, int Len)
-        {
-            return Encoding.Unicode.GetString(_Arr, 0, Len);
-        }
-
-        
+      
+     
         public class SocketData
         {
             //TCP
@@ -174,7 +196,7 @@ namespace Handle
                 public void InitialUDPServer()
                 {
                     UDPServer = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-                    UDPEndPoint = new IPEndPoint(IPAddress.Parse(ServerIP), Port);
+                    UDPEndPoint = new IPEndPoint(IPAddress.Parse(ServerIP), 0);
                 }
 
                 public void InitialTCPServer()
@@ -206,6 +228,22 @@ namespace Handle
 
                 }
 
+                public void UDPSend(List<Dgram> _Data)
+                {
+                    InitialUDPServer();
+
+                    foreach (Dgram ite in _Data)
+                    {
+                        try
+                        {
+                            UDPServer.SendTo(DgramToByte(ite), UDPEndPoint);
+                        }
+                        catch
+                        { return; }
+                    }
+                    UDPServer.Close();
+                }
+
                 private void ThreadInitial()
                 {
                     Recieve_Thread = new Thread(new ThreadStart(Receive_Thread_Run));
@@ -231,7 +269,7 @@ namespace Handle
                             break;
                         }
 
-                        _Temp = SocketHandle.ByteToDgram(_Arr);
+                        _Temp = SocketHandle.ByteToDgram(_Arr, RecvSize);
 
                         switch (_Temp.Type)
                         {

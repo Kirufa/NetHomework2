@@ -24,41 +24,23 @@ namespace ChatClient
             InitializeComponent();
         }
 
+        //****************************
+        //**********variable**********
+        //****************************
+        
         public static ExRichTextBox ERT;
-        private byte[] Name_Arr;
+        private Dictionary<string, string> BmpDic;
+        
+        
+        
+        //*****************************
+        //**********\variable**********
+        //*****************************
+        
 
-        private void button_TCP_Connect_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                /*
-                Server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                IP = new IPEndPoint(IPAddress.Parse(textBox_ServerIP.Text), SocketHandle.SocketData.Port);
-                // Server.Bind(IP);
-                */
-
-                SocketHandle.InitialServer(textBox_ServerIP.Text);
-                SocketHandle.SendToServer(Encoding.Unicode.GetBytes(this.textBox_Name.Text), new byte[1], 7);
-
-            }
-            catch
-            { return; }
-
-            ERT.Text = "";
-
-            foreach (Control i in this.Controls)
-            {
-                if (i is Button || i is TextBox)
-                    i.Enabled = false;
-            }
-
-            button_SendPic.Enabled = true;
-            button_SendText.Enabled = true;
-            textBox_Text.Enabled = true;
-
-            Name_Arr = Encoding.Unicode.GetBytes(textBox_Name.Text);
-
-        }
+        //****************************
+        //**********Function**********
+        //****************************
 
         private Bitmap getPic()
         {
@@ -81,6 +63,78 @@ namespace ChatClient
             bmp.Save(ms, ImageFormat.Bmp);
             return ms.ToArray();
         }
+
+
+        public static void AddText(string _Name, string Text)
+        {
+            if (ERT.InvokeRequired)
+            {
+                ERT.Invoke((MethodInvoker)delegate
+                {
+                    string _Str = _Name + " : " + Text + '\n';
+                    ERT.AppendText(_Str);
+                });
+            }
+            else
+            {
+                string _Str = _Name + " : " + Text + '\n';
+                ERT.AppendText(_Str);
+            }
+        }
+
+
+         private static byte[] StrToByte(string _Str)
+        {
+            return Encoding.Unicode.GetBytes(_Str);
+        }
+
+        private static string ByteToStr(byte[] _Arr,int Len)
+        {           
+            return Encoding.Unicode.GetString(_Arr, 0, Len);
+        }
+
+        //****************************
+        //**********\Function**********
+        //****************************
+
+        //*************************
+        //**********Event**********
+        //*************************
+
+
+        private void button_TCP_Connect_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                /*
+                Server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                IP = new IPEndPoint(IPAddress.Parse(textBox_ServerIP.Text), SocketHandle.SocketData.Port);
+                // Server.Bind(IP);
+                */
+
+                SocketHandle.InitialServer(textBox_ServerIP.Text);
+                SocketHandle.SendText(textBox_Name.Text, "", 7);
+
+            }
+            catch
+            { return; }
+
+            ERT.Text = "";
+
+            foreach (Control i in this.Controls)
+            {
+                if (i is Button || i is TextBox)
+                    i.Enabled = false;
+            }
+
+            button_SendPic.Enabled = true;
+            button_SendText.Enabled = true;
+            textBox_Text.Enabled = true;
+
+            
+        }
+
+     
         private void button2_Click(object sender, EventArgs e)
         {
             /* IPEndPoint ipep = new IPEndPoint(IPAddress.Parse(textBox2.Text), 5555);
@@ -109,30 +163,21 @@ namespace ChatClient
               int n = UDP.ReceiveFrom(arr, ref end);
               ms = new MemoryStream(arr, 0, n);
               pictureBox1.Image = new Bitmap(ms);*/
+
+            Bitmap bmp = new Bitmap(@"C:\Users\yushuen0331\Pictures\Untitled.bmp");
+
+
+            SocketHandle.SendPicture(bmp);
+
+
         }
 
         private void button_SendText_Click(object sender, EventArgs e)
-        {/*
-            string str = "Hello World!\n";
-            SocketHandle.Dgram dgram = new SocketHandle.Dgram();
-            
-            
-            byte [] _Arr = Encoding.Unicode.GetBytes(str);
-            Array.Copy(_Arr, dgram.Data, _Arr.Length);
-            dgram.Type = 1;
-            dgram.DataLength = _Arr.Length;
-
-            MemoryStream ms = new MemoryStream();
-            XmlSerializer xs = new XmlSerializer(typeof(SocketHandle.Dgram));
-            xs.Serialize(ms, dgram);
-
-            Server.Send(ms.ToArray());*/
-            /* byte[] arr = new byte[2048];
-             int n = Server.Receive(arr);
-             this.textBox1.Text = Encoding.ASCII.GetString(arr, 0, n);*/
+        {
             if (textBox_Text.Text.Length > 0)
             {
-                SocketHandle.SendToServer(Name_Arr, Encoding.Unicode.GetBytes(textBox_Text.Text), 1);
+
+                SocketHandle.SendText(textBox_Name.Text, textBox_Text.Text, 1);
                 textBox_Text.Text = "";
             }
             textBox_Text.Focus();
@@ -141,6 +186,7 @@ namespace ChatClient
 
         private void Form_Client_Load(object sender, EventArgs e)
         {
+            //ERT initial
             ERT = new ExRichTextBox();
 
             ERT.Size = panel_Display.Size;
@@ -148,6 +194,13 @@ namespace ChatClient
             ERT.ReadOnly = true;
             this.panel_Display.Controls.Add(ERT);
             ERT.AppendText("Tip : 請輸入暱稱與伺服器IP位址後進行連線");
+
+            ///
+
+            //Dic initial
+            BmpDic = new Dictionary<string, string>();
+            ///
+
 
             foreach (Control i in this.Controls)
             {
@@ -178,23 +231,6 @@ namespace ChatClient
                 this.button_TCP_Connect.Enabled = false;
         }
 
-        public static void AddText(string _Name, string Text)
-        {
-            if (ERT.InvokeRequired)
-            {
-                ERT.Invoke((MethodInvoker)delegate
-                {
-                    string _Str = _Name + " : " + Text + '\n';
-                    ERT.AppendText(_Str);
-                });
-
-            }
-            else
-            {
-                string _Str = _Name + " : " + Text + '\n';
-                ERT.AppendText(_Str);
-            }
-        }
 
         private void button1_Click_1(object sender, EventArgs e)
         {
@@ -214,6 +250,8 @@ namespace ChatClient
 
         }
     }
+
+  
 
 
 
