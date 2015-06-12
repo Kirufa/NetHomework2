@@ -38,28 +38,30 @@ namespace Handle
 
         public const int MAX_DATASIZE = 2048;
         public const int STRING_SIZE = 512;
-       
-        public const int RECEIVE_LENGTH = 10240;
+
+        public const int RECEIVE_LENGTH = 51200;
 
 
 
-        public static void SendPicture(Bitmap bmp)
+        public static void SendPicture(string name,Bitmap bmp)
         {
             List<byte[]> _Data = DivideBitmap(bmp);
             int Size = _Data.Count;
-            SendToServer(new byte[1], StrToByte(Size.ToString()), 3);
+            SendToServer(StrToByte(name), StrToByte(Size.ToString()), 3);
 
-            List<Dgram> _Temp = new List<Dgram>();
+           // List<Dgram> _Temp = new List<Dgram>();
             
             foreach(byte[] ite in _Data)
             {
                 Dgram _D = new Dgram();
                 Array.Copy(ite, _D.Data, ite.Length);
                 _D.DataLength = ite.Length;
-                _Temp.Add(_D);
+                //_Temp.Add(_D);
+                SocketData.Server.TCPSendBmp(_D);
             }
 
-            SocketData.Server.UDPSend(_Temp);
+
+           // SocketData.Server.UDPSend(_Temp);
             
         }
 
@@ -136,6 +138,23 @@ namespace Handle
             SendToServer(_Name_Arr, _Str_Arr, _Type);
 
         }
+
+        public static Bitmap RevertBitmap(List<Dgram> _List)
+        {
+            MemoryStream _Ms = new MemoryStream();
+
+            foreach (Dgram ite in _List)
+            {
+                _Ms.Write(ite.Data, 0, ite.DataLength);
+            }
+
+            Bitmap _Ret = new Bitmap(_Ms);
+
+            return _Ret;
+
+
+
+        }
         private static byte[] StrToByte(string _Str)
         {
             return Encoding.Unicode.GetBytes(_Str);
@@ -144,7 +163,7 @@ namespace Handle
         private static string ByteToStr(byte[] _Arr, int Len)
         {
             return Encoding.Unicode.GetString(_Arr, 0, Len);
-        }
+        }      
 
         private static void SendToServer(byte[] _Name,byte[] _Data,int _Type)
         {
@@ -218,13 +237,47 @@ namespace Handle
 
                     try
                     {
-                        TCPServer.Send(_Arr);
+                        TCPServer.Send(BitConverter.GetBytes(_Arr.Length), 4, SocketFlags.None);
+                        TCPServer.Send(_Arr, _Arr.Length, SocketFlags.None);
                     }
                     catch (Exception ex)
                     {
                         Form_Client.AddText("Except", ex.ToString());
                         this.ReceiveRunning = false;
                     }
+
+                }
+
+                public void TCPSendBmp(Dgram _Dgram)
+                {
+                    byte[] _Arr = SocketHandle.DgramToByte(_Dgram);
+
+                    try
+                    {
+                        TCPServer.Send(BitConverter.GetBytes(_Arr.Length), 4, SocketFlags.None);
+                        TCPServer.Send(_Arr, _Arr.Length, SocketFlags.None);
+                    }
+                    catch (Exception ex)
+                    {
+                        Form_Client.AddText("Except", ex.ToString());
+                        this.ReceiveRunning = false;
+                    }
+
+                }
+                public Bitmap TCPRecvBmp(int N)
+                {
+                    List<Dgram> _Temp = new List<Dgram>();
+
+                    for (int i = 0; i != N; ++i)
+                    {
+                        byte[] _Arr = new byte[RECEIVE_LENGTH];
+                        byte[] _Len = new byte[4];
+                        TCPServer.Receive(_Len, 4, SocketFlags.None);
+                        int recv = TCPServer.Receive(_Arr, BitConverter.ToInt32(_Len, 0), SocketFlags.None);
+                        _Temp.Add(ByteToDgram(_Arr, recv));
+                    }
+
+                    return SocketHandle.RevertBitmap(_Temp);
 
                 }
 
@@ -261,7 +314,9 @@ namespace Handle
                         int RecvSize;
                         try
                         {
-                            RecvSize = TCPServer.Receive(_Arr);
+                            byte[] _Len = new byte[4];
+                            TCPServer.Receive(_Len, 4, SocketFlags.None);
+                            RecvSize = TCPServer.Receive(_Arr, BitConverter.ToInt32(_Len, 0), SocketFlags.None);
                         }
                         catch (Exception ex)
                         {
@@ -281,6 +336,9 @@ namespace Handle
                                 Form_Client.AddText(_Name, _Str);
                                 break;
                             case 4:
+                                string _Name3 = ByteToStr(_Temp.Name,_Temp.NameLength);
+                                int Size = Convert.ToInt32(ByteToStr(_Temp.Data, _Temp.DataLength));
+                                Form_Client.AddPic(_Name3, Server.TCPRecvBmp(Size));
                                 break;
                             case 6:
                                 break;

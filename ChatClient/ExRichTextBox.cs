@@ -571,7 +571,7 @@ namespace Khenys.Controls
 		/// and if any text is selected, that text is replaced.
 		/// </remarks>
 		/// <param name="_image"></param>
-		public void InsertImage(Image _image) 
+		public void InsertImage(Image _image,StringBuilder _strb) 
 		{
 
 			StringBuilder _rtf = new StringBuilder();
@@ -593,6 +593,8 @@ namespace Khenys.Controls
 			_rtf.Append(RTF_IMAGE_POST);
 
 			this.SelectedRtf = _rtf.ToString();
+            _strb.Append(_rtf.ToString());
+            
 		}
 
 		/// <summary>
