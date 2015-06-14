@@ -57,7 +57,7 @@
             this.textBox_ServerIP.Name = "textBox_ServerIP";
             this.textBox_ServerIP.Size = new System.Drawing.Size(100, 22);
             this.textBox_ServerIP.TabIndex = 1;
-            this.textBox_ServerIP.Text = "192.168.0.106";
+            this.textBox_ServerIP.Text = "192.168.0.100";
             this.textBox_ServerIP.TextChanged += new System.EventHandler(this.textBox_ServerIP_TextChanged);
             // 
             // panel_Display

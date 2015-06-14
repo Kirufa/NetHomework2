@@ -40,7 +40,7 @@ namespace Handle
         public const int STRING_SIZE = 512;
 
         public const int RECEIVE_LENGTH = 51200;
-
+        public const int THREAD_SLEEP_TIME = 10;//ms
 
 
         public static void SendPicture(string name,Bitmap bmp)
@@ -224,6 +224,8 @@ namespace Handle
                     TCPEndPoint = new IPEndPoint(IPAddress.Parse(ServerIP), SocketData.Port);
                     EndPoint _EndPoint = (EndPoint)TCPEndPoint;
                     TCPServer.Connect(_EndPoint);
+                   // MessageBox.Show(TCPServer.ReceiveBufferSize.ToString());
+                   // MessageBox.Show(TCPServer.SendBufferSize.ToString());
                     ThreadInitial();
 
                 }
@@ -238,7 +240,9 @@ namespace Handle
                     try
                     {
                         TCPServer.Send(BitConverter.GetBytes(_Arr.Length), 4, SocketFlags.None);
+                        Thread.Sleep(THREAD_SLEEP_TIME);
                         TCPServer.Send(_Arr, _Arr.Length, SocketFlags.None);
+                        Thread.Sleep(THREAD_SLEEP_TIME);
                     }
                     catch (Exception ex)
                     {
@@ -255,7 +259,9 @@ namespace Handle
                     try
                     {
                         TCPServer.Send(BitConverter.GetBytes(_Arr.Length), 4, SocketFlags.None);
+                        Thread.Sleep(THREAD_SLEEP_TIME);
                         TCPServer.Send(_Arr, _Arr.Length, SocketFlags.None);
+                        Thread.Sleep(THREAD_SLEEP_TIME);
                     }
                     catch (Exception ex)
                     {
@@ -273,7 +279,9 @@ namespace Handle
                         byte[] _Arr = new byte[RECEIVE_LENGTH];
                         byte[] _Len = new byte[4];
                         TCPServer.Receive(_Len, 4, SocketFlags.None);
+                        Thread.Sleep(THREAD_SLEEP_TIME);
                         int recv = TCPServer.Receive(_Arr, BitConverter.ToInt32(_Len, 0), SocketFlags.None);
+                        Thread.Sleep(THREAD_SLEEP_TIME);
                         _Temp.Add(ByteToDgram(_Arr, recv));
                     }
 
@@ -316,7 +324,9 @@ namespace Handle
                         {
                             byte[] _Len = new byte[4];
                             TCPServer.Receive(_Len, 4, SocketFlags.None);
+                            Thread.Sleep(THREAD_SLEEP_TIME);
                             RecvSize = TCPServer.Receive(_Arr, BitConverter.ToInt32(_Len, 0), SocketFlags.None);
+                            Thread.Sleep(THREAD_SLEEP_TIME);
                         }
                         catch (Exception ex)
                         {

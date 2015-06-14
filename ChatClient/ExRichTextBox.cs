@@ -577,22 +577,20 @@ namespace Khenys.Controls
 			StringBuilder _rtf = new StringBuilder();
 
 			// Append the RTF header
-			_rtf.Append(RTF_HEADER);
-
+			//_rtf.Append(RTF_HEADER);
+            _rtf.Append(RTF_HEADER);
 			// Create the font table using the RichTextBox's current font and append
 			// it to the RTF string
 			_rtf.Append(GetFontTable(this.Font));
-
+			
 			// Create the image control string and append it to the RTF string
 			_rtf.Append(GetImagePrefix(_image));
-
 			// Create the Windows Metafile and append its bytes in HEX format
 			_rtf.Append(GetRtfImage(_image));
-
 			// Close the RTF image control string
 			_rtf.Append(RTF_IMAGE_POST);
-
 			this.SelectedRtf = _rtf.ToString();
+            Console.Write(_rtf.ToString());
             _strb.Append(_rtf.ToString());
             
 		}
@@ -718,7 +716,7 @@ namespace Khenys.Controls
 		/// <returns>
 		/// A string containing the bits of a Windows Metafile in HEX
 		/// </returns>
-		private string GetRtfImage(Image _image) 
+		public string GetRtfImage(Image _image) 
 		{
 
 			StringBuilder _rtf = null;

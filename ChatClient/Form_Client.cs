@@ -48,6 +48,7 @@ namespace ChatClient
         private Bitmap getPic()
         {
             OpenFileDialog ofd = new OpenFileDialog();
+            ofd.Filter = "Image files (*.jpg, *.jpeg, *.png, *.gif, *.bmp) | *.jpg; *.jpeg; *.png; *.gif; *.bmp";
             ofd.FileName = null;
 
             if (ofd.ShowDialog() == DialogResult.OK && ofd.FileName != null)
@@ -116,13 +117,20 @@ namespace ChatClient
                 }
 
 
+
             }
             else
                 _Temp = new Bitmap(Bmp);
 
-            StringBuilder _Sb = new StringBuilder();
-               
+            using (FileStream fs = new FileStream("aaa.txt", FileMode.Create))
+            {
+                fs.Write(Encoding.Unicode.GetBytes(ERT.GetRtfImage(_Temp)), 0, ERT.GetRtfImage(_Temp).Length);
+                fs.Close();
+            }
 
+
+            StringBuilder _Sb = new StringBuilder();
+         
             if (ERT.InvokeRequired)
             {
                 ERT.Invoke((MethodInvoker)delegate
@@ -131,6 +139,10 @@ namespace ChatClient
                     ERT.AppendText(_Str);
                     ERT.Select(ERT.TextLength, 0);
                     ERT.InsertImage(_Temp, _Sb);
+                    if (!BmpDic.ContainsKey(ERT.SelectedRtf.GetHashCode()))
+                        BmpDic.Add(ERT.SelectedRtf.GetHashCode(), _Temp);
+                   // MessageBox.Show(ERT.SelectedRtf.ToString().GetHashCode().ToString());
+                  
                     ERT.AppendText("\n");
                     ERT.Select(ERT.TextLength, 0);
                 });
@@ -141,12 +153,14 @@ namespace ChatClient
                 ERT.AppendText(_Str);
                 ERT.Select(ERT.TextLength, 0);
                 ERT.InsertImage(_Temp, _Sb);
+                if (!BmpDic.ContainsKey(ERT.SelectedRtf.GetHashCode()))
+                    BmpDic.Add(ERT.SelectedRtf.GetHashCode(), _Temp);
+              
                 ERT.AppendText("\n");
                 ERT.Select(ERT.TextLength, 0);
             }
-            MessageBox.Show(_Sb.ToString());
-            if (!BmpDic.ContainsKey(_Sb.ToString().GetHashCode()))
-                BmpDic.Add(_Sb.ToString().GetHashCode(), _Temp);
+           // MessageBox.Show(_Sb.ToString());
+            
 
         }
 
@@ -235,6 +249,8 @@ namespace ChatClient
             this.textBox_Name.Enabled = true;
             this.textBox_ServerIP.Enabled = true;
 
+            this.textBox_Name_TextChanged(null, null);
+
          
         }
 
@@ -260,7 +276,13 @@ namespace ChatClient
             if (ERT.SelectionType == RichTextBoxSelectionTypes.Object
                    && ERT.SelectedRtf.IndexOf(@"\pict\wmetafile") != -1)
             {
-                MessageBox.Show(ERT.SelectedRtf.ToString());
+
+                using (FileStream fs = new FileStream("bbb.txt", FileMode.Create))
+                {
+                    fs.Write(Encoding.Unicode.GetBytes(ERT.SelectedRtf.ToString()), 0, ERT.SelectedRtf.Length);
+                    fs.Close();
+                }
+
                 Bitmap bmp;
                 if (BmpDic.TryGetValue(ERT.SelectedRtf.ToString().GetHashCode(),out bmp))
                     ShowBmp(bmp);
