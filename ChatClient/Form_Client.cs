@@ -121,14 +121,14 @@ namespace ChatClient
             }
             else
                 _Temp = new Bitmap(Bmp);
-
+            /*
             using (FileStream fs = new FileStream("aaa.txt", FileMode.Create))
             {
                 fs.Write(Encoding.Unicode.GetBytes(ERT.GetRtfImage(_Temp)), 0, ERT.GetRtfImage(_Temp).Length);
                 fs.Close();
             }
 
-
+            */
             StringBuilder _Sb = new StringBuilder();
          
             if (ERT.InvokeRequired)
@@ -232,7 +232,7 @@ namespace ChatClient
             ERT.ReadOnly = true;
             this.panel_Display.Controls.Add(ERT);
             ERT.AppendText("Tip : 請輸入暱稱與伺服器IP位址後進行連線");
-            ERT.Click += new EventHandler(ERT_Click);
+            //ERT.Click += new EventHandler(ERT_Click);
             ///
 
             //Dic initial
@@ -276,13 +276,13 @@ namespace ChatClient
             if (ERT.SelectionType == RichTextBoxSelectionTypes.Object
                    && ERT.SelectedRtf.IndexOf(@"\pict\wmetafile") != -1)
             {
-
+                /*
                 using (FileStream fs = new FileStream("bbb.txt", FileMode.Create))
                 {
                     fs.Write(Encoding.Unicode.GetBytes(ERT.SelectedRtf.ToString()), 0, ERT.SelectedRtf.Length);
                     fs.Close();
                 }
-
+                */
                 Bitmap bmp;
                 if (BmpDic.TryGetValue(ERT.SelectedRtf.ToString().GetHashCode(),out bmp))
                     ShowBmp(bmp);

@@ -1,0 +1,8 @@
+C:\Users\yushuen0331\Desktop\GIT\NetHomework2\ChatClient\bin\Release\ChatClient.exe
+C:\Users\yushuen0331\Desktop\GIT\NetHomework2\ChatClient\bin\Release\ChatClient.pdb
+C:\Users\yushuen0331\Desktop\GIT\NetHomework2\ChatClient\obj\Release\ChatClient.csprojResolveAssemblyReference.cache
+C:\Users\yushuen0331\Desktop\GIT\NetHomework2\ChatClient\obj\Release\ChatClient.Form_Client.resources
+C:\Users\yushuen0331\Desktop\GIT\NetHomework2\ChatClient\obj\Release\ChatClient.Properties.Resources.resources
+C:\Users\yushuen0331\Desktop\GIT\NetHomework2\ChatClient\obj\Release\ChatClient.csproj.GenerateResource.Cache
+C:\Users\yushuen0331\Desktop\GIT\NetHomework2\ChatClient\obj\Release\ChatClient.exe
+C:\Users\yushuen0331\Desktop\GIT\NetHomework2\ChatClient\obj\Release\ChatClient.pdb
